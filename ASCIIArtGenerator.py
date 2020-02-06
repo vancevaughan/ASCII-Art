@@ -1,7 +1,10 @@
 from PIL import Image
+from PIL import ImageDraw
+from PIL import ImageFont
 import numpy as np
 
-gs = ' .:-=+*#%@'
+gs_reverse = '@%#*+=-:. '
+gs = " .:-=+*#%@"
 
 # returns average level of image tile
 def getAverageL(tile):
@@ -27,19 +30,19 @@ def contrastStretch(unstretched_image):
 def getASCIIArt(image, cols, scale):
     w, h = image.size[0], image.size[1]
 
-    M = cols
-    x = w / M
+    m = cols
+    x = w / m
     y = x / scale
-    N = int(h / y)
+    n = int(h / y)
 
     converted_image = []
 
-    for j in range(N):
+    for j in range(n):
         y1 = int(j * y)
         y2 = int((j + 1) * y)
 
         # correct last tile
-        if j == N - 1:
+        if j == n - 1:
             y2 = h
 
         # append an empty string
@@ -72,13 +75,33 @@ def getASCIIArt(image, cols, scale):
 
 filename = "selfie.png"
 image = Image.open(filename).convert("L")
-img_array = contrastStretch(image)
-image = Image.fromarray(img_array)
 
-ASCIIArt = getASCIIArt(image, 150, 0.45)
+numCols = 155
+scale = 0.5
+width, height = image.size[0], image.size[1]
 
-outputFile = filename.partition(".")[0] + ".txt"
-f = open(outputFile, 'w')
-for row in (ASCIIArt):
+ASCII_array = getASCIIArt(image, numCols, scale)
+
+# write to text file
+outputTXTFile = filename.partition(".")[0] + ".txt"
+f = open(outputTXTFile, 'w')
+for row in ASCII_array:
     f.write(row + '\n')
 f.close()
+
+# create ASCII image
+k = 8
+ASCII_image = Image.new('RGB', (k * width, k * height), '#000000')
+draw = ImageDraw.Draw(ASCII_image)
+font = ImageFont.truetype("cour.ttf", int(k * 1.625 * width / numCols))
+font_color = '#afff14'
+
+y_pos = 0
+for row in ASCII_array:
+    draw.text((0, y_pos), (row + '\n'), font_color, font)
+    y_pos = y_pos + (k * 2 * width / numCols)
+
+ASCII_image.show()
+
+outputPNGFile = filename.partition(".")[0] + "_ASCII.png"
+ASCII_image.save(outputPNGFile)
